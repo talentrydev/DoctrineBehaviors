@@ -1,5 +1,5 @@
 {
-    "name": "knplabs/doctrine-behaviors",
+    "name": "talentrydev/doctrine-behaviors",
     "description": "Doctrine Behavior Traits",
     "type": "symfony-bundle",
     "keywords": [
