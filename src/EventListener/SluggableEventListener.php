@@ -2,18 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Knp\DoctrineBehaviors\EventSubscriber;
+namespace Knp\DoctrineBehaviors\EventListener;
 
-use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
+use Doctrine\ORM\Event\PrePersistEventArgs;
+use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Knp\DoctrineBehaviors\Contract\Entity\SluggableInterface;
 use Knp\DoctrineBehaviors\Repository\DefaultSluggableRepository;
 
-final class SluggableEventSubscriber implements EventSubscriberInterface
+#[AsDoctrineListener(event: Events::loadClassMetadata)]
+#[AsDoctrineListener(event: Events::prePersist)]
+#[AsDoctrineListener(event: Events::preUpdate)]
+final class SluggableEventListener
 {
     /**
      * @var string
@@ -22,7 +26,7 @@ final class SluggableEventSubscriber implements EventSubscriberInterface
 
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private DefaultSluggableRepository $defaultSluggableRepository
+        private DefaultSluggableRepository $defaultSluggableRepository,
     ) {
     }
 
@@ -40,22 +44,14 @@ final class SluggableEventSubscriber implements EventSubscriberInterface
         ]);
     }
 
-    public function prePersist(LifecycleEventArgs $lifecycleEventArgs): void
+    public function prePersist(PrePersistEventArgs $prePersistEventArgs): void
     {
-        $this->processLifecycleEventArgs($lifecycleEventArgs);
+        $this->processPreAndPostPersistEventArgs($prePersistEventArgs);
     }
 
-    public function preUpdate(LifecycleEventArgs $lifecycleEventArgs): void
+    public function preUpdate(PreUpdateEventArgs $preUpdateEventArgs): void
     {
-        $this->processLifecycleEventArgs($lifecycleEventArgs);
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getSubscribedEvents(): array
-    {
-        return [Events::loadClassMetadata, Events::prePersist, Events::preUpdate];
+        $this->processPreAndPostPersistEventArgs($preUpdateEventArgs);
     }
 
     private function shouldSkip(ClassMetadataInfo $classMetadataInfo): bool
@@ -67,17 +63,17 @@ final class SluggableEventSubscriber implements EventSubscriberInterface
         return $classMetadataInfo->hasField(self::SLUG);
     }
 
-    private function processLifecycleEventArgs(LifecycleEventArgs $lifecycleEventArgs): void
+    private function processPreAndPostPersistEventArgs(PrePersistEventArgs|PreUpdateEventArgs $eventArgs): void
     {
-        $entity = $lifecycleEventArgs->getEntity();
-        if (! $entity instanceof SluggableInterface) {
+        $object = $eventArgs->getObject();
+        if (!$object instanceof SluggableInterface) {
             return;
         }
 
-        $entity->generateSlug();
+        $object->generateSlug();
 
-        if ($entity->shouldGenerateUniqueSlugs()) {
-            $this->generateUniqueSlugFor($entity);
+        if ($object->shouldGenerateUniqueSlugs()) {
+            $this->generateUniqueSlugFor($object);
         }
     }
 
