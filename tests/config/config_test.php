@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use Knp\DoctrineBehaviors\Contract\Provider\LocaleProviderInterface;
 use Knp\DoctrineBehaviors\Contract\Provider\UserProviderInterface;
-use Knp\DoctrineBehaviors\EventSubscriber\LoggableEventSubscriber;
+use Knp\DoctrineBehaviors\EventListener\LoggableEventListener;
 use Knp\DoctrineBehaviors\Tests\DatabaseLoader;
 use Knp\DoctrineBehaviors\Tests\Provider\TestLocaleProvider;
 use Knp\DoctrineBehaviors\Tests\Provider\TestUserProvider;
 use Psr\Log\Test\TestLogger;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Bundle\SecurityBundle\Security;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
 return static function (ContainerConfigurator $containerConfigurator): void {
@@ -45,7 +45,7 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     $services->set(DatabaseLoader::class);
 
-    $services->set(LoggableEventSubscriber::class)
+    $services->set(LoggableEventListener::class)
         ->arg('$logger', service(TestLogger::class));
 
     $containerConfigurator->extension('doctrine', [

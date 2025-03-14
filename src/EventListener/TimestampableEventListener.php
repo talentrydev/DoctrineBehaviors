@@ -2,17 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Knp\DoctrineBehaviors\EventSubscriber;
+namespace Knp\DoctrineBehaviors\EventListener;
 
-use Doctrine\Bundle\DoctrineBundle\EventSubscriber\EventSubscriberInterface;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\LoadClassMetadataEventArgs;
 use Doctrine\ORM\Events;
 use Knp\DoctrineBehaviors\Contract\Entity\TimestampableInterface;
 
-final class TimestampableEventSubscriber implements EventSubscriberInterface
+#[AsDoctrineListener(event: Events::loadClassMetadata)]
+final class TimestampableEventListener
 {
     public function __construct(
-        private string $timestampableDateFieldType
+        private string $timestampableDateFieldType,
     ) {
     }
 
@@ -24,7 +25,7 @@ final class TimestampableEventSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if (! is_a($classMetadata->reflClass->getName(), TimestampableInterface::class, true)) {
+        if (!is_a($classMetadata->reflClass->getName(), TimestampableInterface::class, true)) {
             return;
         }
 
@@ -44,13 +45,5 @@ final class TimestampableEventSubscriber implements EventSubscriberInterface
                 ]);
             }
         }
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getSubscribedEvents(): array
-    {
-        return [Events::loadClassMetadata];
     }
 }
